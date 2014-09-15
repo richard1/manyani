@@ -1,2 +1,89 @@
-It works!
-(gh-pages)
+<!doctype HTML>
+<head>
+	<title>ManyAni</title>
+	<link rel="shortcut icon" type="image/png" href="/favicon.png"/>
+	<link rel="stylesheet" type="text/css" href="http://getbootstrap.com/dist/css/bootstrap.min.css">
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script type="text/javascript">
+
+		var CR_HOST = "http://crunchyroll.com/";
+		var AFTW_HOST = "http://www.animeftw.tv/";
+
+		$(document).ready(function() {
+			$("#query").keyup(function(event){
+				if(event.keyCode == 13){
+					$("#searchBtn").click();
+				}
+			});
+		});
+
+		function search() {
+			var raw = $('#query').val();
+			var query = querify(raw.trim());
+			var slug = slugify(raw.trim());
+
+			urlExists(CR_HOST + slug, function(status) {
+				if(status) {
+					$('#crunchyroll').attr("src", CR_HOST + slug);
+				}
+				else {
+					$('#crunchyroll').attr("src", CR_HOST + "search?q=" + query);
+				}
+			});
+
+			
+			urlExists(AFTW_HOST + "anime/" + slug, function(status) {
+				if(status) {
+					$('#animeftw').attr("src", AFTW_HOST + "anime/" + slug);
+				}
+				else {
+					$('#animeftw').attr("src", AFTW_HOST + "search?q=" + query);
+				}
+			});
+		}
+
+		function querify(query) {
+			return query.replace(/\s+/g, '+');
+		}
+
+		function slugify(query) {
+			return query.replace(/\s+/g, '-');
+		}
+
+		function urlExists(url, callback) {
+			var yql = "http://query.yahooapis.com/v1/public/yql?" +
+					  "q=select%20*%20from%20html%20where%20url%3D%22" +
+					   encodeURIComponent(url) + "%22&format=xml'&callback=?";
+			$.getJSON(yql, function(data, status, jqxhr) {
+
+				// TODO: this is returning null for animeftw, investigate why
+				if(data.results[0]) {
+					callback.apply(this, [true]);
+				}
+				else {
+					callback.apply(this, [false]);
+				}
+			});
+		}
+	</script>
+</head>
+<body>
+
+<div class="jumbotron">
+<div class="row">
+	<div class="col-xs-9">
+		<input id="query" type="text" class="form-control" placeholder="Sword Art Online"></input>
+	</div>
+	<div class="col-xs-3">
+		<button id="searchBtn" class="btn btn-primary" onclick="search()">Go</button>
+	</div>
+</div>
+</div>
+
+<div id="results">
+	<iframe id="crunchyroll" width="49%" height="400px" frameborder="0"></iframe>
+	<iframe id="animeftw" width="49%" height="400px" frameborder="0"></iframe>
+</div>
+
+</body>
+</html>
